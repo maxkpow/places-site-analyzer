@@ -7,6 +7,10 @@ name = "pypi"
 selenium = "*"
 selenium-wire = "*"
 webdriver-manager = "*"
+openpyxl = "*"
+typing = "*"
+pydentic = "*"
+pydantic = "*"
 
 [dev-packages]
 
