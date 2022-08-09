@@ -1,7 +1,7 @@
 CONTENT_TYPES = [
     "text/csv",
     "text/html",
-    "text/javascript",
+    # "text/javascript",
     "text/xml",
     "text/plain",
     "application/json",
