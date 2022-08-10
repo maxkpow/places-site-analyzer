@@ -11,6 +11,7 @@ openpyxl = "*"
 typing = "*"
 pydentic = "*"
 pydantic = "*"
+pytest = "*"
 
 [dev-packages]
 
