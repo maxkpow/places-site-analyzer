@@ -23,6 +23,9 @@ class TestCapture():
         df_js = pd.DataFrame(result['scripts'])
         df_js.to_excel(f"{site_name}-scripts-{time.time()}.xlsx")
 
+        df_js = pd.DataFrame(result['links'])
+        df_js.to_excel(f"{site_name}-links-{time.time()}.xlsx")
+
         assert len(result) > 0
     
 

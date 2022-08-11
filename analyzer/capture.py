@@ -1,12 +1,12 @@
 from seleniumwire import webdriver
 from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
-from typing import List
-import gzip
-import brotli
-from analyzer.constants import CONTENT_TYPES, SEARCH_WORDS
 from analyzer.models import HTTPResponse
+from analyzer.parsers import HTTPParser, ScriptsParser, ListsParser, LinksParser
+from bs4 import BeautifulSoup
+from typing import List
 import time
+
 
 class WebDataCapture():
 
@@ -15,83 +15,54 @@ class WebDataCapture():
         self.options.add_argument("--headless")
     
     def start(self, website=None, timeout=5):
+        self.website = website
+
         driver = webdriver.Chrome(ChromeDriverManager().install(), options=self.options)
         driver.get(website)
 
+        # soup = BeautifulSoup(driver.page_source)
+
         # import pdb;pdb.set_trace()
-        # timeout for long loading websites & ajax requests
         time.sleep(timeout)
 
-        # capture unordered lists
-        captured_ulists = driver.find_elements(By.TAG_NAME, "ul")
-        captured_ulists_text = [item.text for item in captured_ulists if item.text != ""]
-
-        # capture ordered lists
-        captured_olists = driver.find_elements(By.TAG_NAME, "ol")
-        captured_olists_text = [item.text for item in captured_olists if item.text != ""]
-        
-        # capture scripts
-        captured_scripts = driver.find_elements(By.TAG_NAME, "script")
-        captured_scripts_text = [item.text for item in captured_scripts if item.text != ""]
-
-        # capture http requests
-        captured_http_requests: List[HTTPResponse] = list(self.parse_http_requests(driver.requests))
+        captured_requests: List[HTTPResponse] = self.__parse_requests(driver.requests)
+        captured_scripts: List = self.__parse_scripts(driver.find_elements(By.TAG_NAME, "script"))
+        captured_olists: List = self.__parse_lists(driver.find_elements(By.TAG_NAME, "ol"))
+        captured_ulists: List = self.__parse_lists(driver.find_elements(By.TAG_NAME, "ul"))
+        captured_links: List = self.__parse_links(driver.find_elements(By.TAG_NAME, "a"))
     
         # capture all data depending on required content: http, tables, lists, scripts, ect.
         driver.quit()
 
         return {
-            "requests": captured_http_requests,
-            "olists": captured_olists_text,
-            "ulists": captured_ulists_text,
+            "requests": captured_requests,
+            "olists": captured_olists,
+            "ulists": captured_ulists,
             "tables": [],
-            "scripts": captured_scripts_text
+            "links": captured_links,
+            "scripts": captured_scripts
         }
-
-    def content_decoder(self, content, content_encoding):
-        if content_encoding == "gzip":
-            return gzip.decompress(content).decode("utf-8")
-        elif content_encoding == "br":
-            return brotli.decompress(content).decode("utf-8")
-        else:
-            return content
     
-    def search_words(self, content: str = "") -> bool:
-        if any(map(lambda x: x in content.lower(), SEARCH_WORDS)):
-            return True
-        else:
-            return False
+    def __parse_requests(self, requests: List):
+        parser = HTTPParser()
+        parsed_list = list(parser.parse(requests))
+
+        return parsed_list
     
-    def parse_http_requests(self, requests: List):
-        for request in requests:
-            if request.response:
-                try:
-                    content_type = request.response.headers['content-type']
-                    
-                    relevent_content_exists = any(map(lambda x: x in content_type, CONTENT_TYPES))
-                    # relevent_content_exists = True
+    def __parse_scripts(self, scripts):
+        parser = ScriptsParser()
+        parsed_list = list(parser.parse(scripts, self.website))
 
-                    if  relevent_content_exists:
-                        
-                        headers = dict((key, value) for key, value in request.response.headers.items())
-                        content_encoding = request.response.headers['content-encoding']
-                        response_body = self.content_decoder(request.response.body, content_encoding)
-                        location_words = self.search_words(response_body)
+        return parsed_list
+    
+    def __parse_lists(self, html_lists):
+        parser = ListsParser()
+        parsed_list = list(parser.parse(html_lists))
 
-                        captured_request: HTTPResponse = {
-                            "location_words": location_words,
-                            "host": request.host,
-                            "url": request.url, 
-                            "path": request.path,
-                            "method": request.method,
-                            "status": request.response.status_code,
-                            "headers": headers,
-                            "content_encoding": content_encoding,
-                            "content_type": content_type,
-                            "content_length": request.response.headers["content-length"],
-                            "body": response_body,
-                        }
+        return parsed_list
+    
+    def __parse_links(self, links_list):
+        parser = LinksParser()
+        parsed_list = list(parser.parse(links_list, self.website))
 
-                        yield captured_request
-                except:
-                    pass
+        return parsed_list

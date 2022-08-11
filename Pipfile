@@ -12,6 +12,8 @@ typing = "*"
 pydentic = "*"
 pydantic = "*"
 pytest = "*"
+bs4 = "*"
+lxml = "*"
 
 [dev-packages]
 

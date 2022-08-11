@@ -33,4 +33,10 @@ SEARCH_WORDS = [
     "coordinates",
     "coords",
     "properties",
+    "email",
+    "contacts",
+    "store",
+    "locator",
+    "контакты",
+    "почта",
 ]
