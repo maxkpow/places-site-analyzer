@@ -13,6 +13,7 @@ class WebDataCapture():
     def __init__(self):
         self.options = webdriver.ChromeOptions()
         self.options.add_argument("--headless")
+        self.options.add_argument("--remote-debugging-port=9222")
     
     def start(self, website=None, timeout=5):
         self.website = website
