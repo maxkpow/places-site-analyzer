@@ -55,7 +55,7 @@ class HTTPParser(Parser):
     def parse(self, requests: List):
         for request in requests:
             if request.response:
-                response_content_type = request.response.headers['content-type']
+                response_content_type = request.response.headers.get("content-type", "")
                 is_target_content_type = any(map(lambda x: x in response_content_type, CONTENT_TYPES))
 
                 if is_target_content_type:
@@ -85,9 +85,10 @@ class ScriptsParser(Parser):
 
     def parse(self, scripts: List, website: str =None) -> List[dict]:
         if scripts:
+            # import pdb;pdb.set_trace()
             for script in scripts:
                 src = script.get_attribute("src")
-                content = script.text
+                content = script.get_attribute("innerHTML")
 
                 are_search_words_in_body = self.search_words(content)
 
