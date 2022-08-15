@@ -1,7 +1,7 @@
 from urllib.parse import urlparse
 import pandas as pd
 import time
-from analyzer.capture import WebDataCapture
+from scany.core import WebDataCapture
 import os
 
 def save_result(result: dict, sitename: str):

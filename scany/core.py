@@ -3,7 +3,7 @@ from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
 from scany.models import HTTPResponse
 from scany.parsers import HTTPParser, ScriptsParser, ListsParser, LinksParser
-from bs4 import BeautifulSoup
+# from bs4 import BeautifulSoup
 from typing import List
 import time
 
