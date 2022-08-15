@@ -3,8 +3,8 @@ from enum import Enum
 import gzip
 import brotli
 from urllib.parse import urlparse
-from analyzer.constants import CONTENT_TYPES, SEARCH_WORDS
-from analyzer.models import HTTPResponse
+from scany.constants import CONTENT_TYPES, SEARCH_WORDS
+from scany.models import HTTPResponse
 from typing import List
 
 class ContentEncoding(Enum):

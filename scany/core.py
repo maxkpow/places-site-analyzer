@@ -1,8 +1,8 @@
 from seleniumwire import webdriver
 from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
-from analyzer.models import HTTPResponse
-from analyzer.parsers import HTTPParser, ScriptsParser, ListsParser, LinksParser
+from scany.models import HTTPResponse
+from scany.parsers import HTTPParser, ScriptsParser, ListsParser, LinksParser
 from bs4 import BeautifulSoup
 from typing import List
 import time

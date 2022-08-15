@@ -1,7 +1,7 @@
+import time
 import pandas as pd
 from urllib.parse import urlparse
-import time
-from analyzer.capture import WebDataCapture
+from scany.core import WebDataCapture
 
 class TestCapture():
     def test_avoska(self):
