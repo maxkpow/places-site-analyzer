@@ -6,7 +6,10 @@ from scany.parsers import HTTPParser, ScriptsParser, ListsParser, LinksParser
 # from bs4 import BeautifulSoup
 from typing import List
 import time
+import logging
 
+
+logging.basicConfig(encoding='utf-8', level=logging.INFO)
 
 class WebDataCapture():
 
@@ -14,26 +17,39 @@ class WebDataCapture():
         self.options = webdriver.ChromeOptions()
         self.options.add_argument("--headless")
         self.options.add_argument("--remote-debugging-port=9222")
+
+        logging.info(msg="Initializing Webdriver options...")
     
     def start(self, website=None, timeout=5):
         self.website = website
 
+        logging.info(msg=f"Start capturing data from {self.website}")
+
         driver = webdriver.Chrome(ChromeDriverManager().install(), options=self.options)
         driver.get(website)
 
-        # soup = BeautifulSoup(driver.page_source)
-
-        # import pdb;pdb.set_trace()
         time.sleep(timeout)
 
         captured_requests: List[HTTPResponse] = self.__parse_requests(driver.requests)
+        logging.info(msg="capturing HTTP Requests...")
+
         captured_scripts: List = self.__parse_scripts(driver.find_elements(By.TAG_NAME, "script"))
+        logging.info(msg="capturing <script>...</script> tags ...")
+
         captured_olists: List = self.__parse_lists(driver.find_elements(By.TAG_NAME, "ol"))
+        logging.info(msg="capturing <ol>...</ol> tags ...")
+
         captured_ulists: List = self.__parse_lists(driver.find_elements(By.TAG_NAME, "ul"))
+        logging.info(msg="capturing <ul>...</ul> tags ...")
+
         captured_links: List = self.__parse_links(driver.find_elements(By.TAG_NAME, "a"))
+        logging.info(msg="capturing <a>...</a> tags ...")
+
     
         # capture all data depending on required content: http, tables, lists, scripts, ect.
         driver.quit()
+        logging.info(msg="Webdriver work finished successfully.")
+        logging.info(msg="Quit Webdriver.")
 
         return {
             "requests": captured_requests,
