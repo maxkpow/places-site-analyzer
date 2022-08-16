@@ -9,11 +9,9 @@ Tool extracts:
 - links from a tags
 - scripts
 
-### Installing
-----------
+#### Installing
     pip install --editable .
 
 
-### Usage
-----------
+#### Usage
     scany run --url https://avoska.ru
