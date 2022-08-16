@@ -6,6 +6,7 @@ from urllib.parse import urlparse
 from scany.constants import CONTENT_TYPES, SEARCH_WORDS
 from scany.models import HTTPResponse
 from typing import List
+import re
 
 class ContentEncoding(Enum):
     GZIP = "gzip"
@@ -21,8 +22,11 @@ class Parser(ABC):
     @classmethod
     def search_words(self, content: str = "") -> bool:
         try:
-            if any(map(lambda x: x in content.lower(), SEARCH_WORDS)):
-                return True
+            
+            found_words = [{word: re.findall(word, content.lower())} for word in SEARCH_WORDS if re.findall(word, content.lower())]
+            
+            if len(found_words):
+                return found_words
             else:
                 return False
         except:

@@ -3,7 +3,6 @@ from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
 from scany.models import HTTPResponse
 from scany.parsers import HTTPParser, ScriptsParser, ListsParser, LinksParser
-# from bs4 import BeautifulSoup
 from typing import List
 import time
 import logging
@@ -31,19 +30,10 @@ class WebDataCapture():
         time.sleep(timeout)
 
         captured_requests: List[HTTPResponse] = self.__parse_requests(driver.requests)
-        logging.info(msg="capturing HTTP Requests...")
-
         captured_scripts: List = self.__parse_scripts(driver.find_elements(By.TAG_NAME, "script"))
-        logging.info(msg="capturing <script>...</script> tags ...")
-
         captured_olists: List = self.__parse_lists(driver.find_elements(By.TAG_NAME, "ol"))
-        logging.info(msg="capturing <ol>...</ol> tags ...")
-
         captured_ulists: List = self.__parse_lists(driver.find_elements(By.TAG_NAME, "ul"))
-        logging.info(msg="capturing <ul>...</ul> tags ...")
-
         captured_links: List = self.__parse_links(driver.find_elements(By.TAG_NAME, "a"))
-        logging.info(msg="capturing <a>...</a> tags ...")
 
     
         # capture all data depending on required content: http, tables, lists, scripts, ect.
@@ -61,24 +51,30 @@ class WebDataCapture():
         }
     
     def __parse_requests(self, requests: List):
+        logging.info(msg="capturing HTTP Requests...")
+
         parser = HTTPParser()
         parsed_list = list(parser.parse(requests))
 
         return parsed_list
     
     def __parse_scripts(self, scripts):
+        logging.info(msg="capturing <script>...</script> tags ...")
         parser = ScriptsParser()
         parsed_list = list(parser.parse(scripts, self.website))
 
         return parsed_list
     
     def __parse_lists(self, html_lists):
+        logging.info(msg="capturing <ol>...</ol> & <ul>...</ul> tags ...")
+        
         parser = ListsParser()
         parsed_list = list(parser.parse(html_lists))
 
         return parsed_list
     
     def __parse_links(self, links_list):
+        logging.info(msg="capturing <a>...</a> tags ...")
         parser = LinksParser()
         parsed_list = list(parser.parse(links_list, self.website))
 
