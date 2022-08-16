@@ -1,5 +1,4 @@
 # Scany
-====
 Tool uses selenium to analyze website for POI (Points of interest) data existance.
 UML https://app.diagrams.net/#G1hv3iaBeUxmB34LA99gm7ypodzCKKft-x
 
@@ -9,11 +8,9 @@ Tool extracts:
 - links from a tags
 - scripts
 
-### Installing
-----------
+#### Installing
     pip install --editable .
 
 
-### Usage
-----------
+#### Usage
     scany run --url https://avoska.ru
