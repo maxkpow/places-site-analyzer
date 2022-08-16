@@ -39,6 +39,7 @@ SEARCH_WORDS = [
     "postcode",
     "postal",
     "postal_code",
+    "geoobject",
     "locator",
     "контакты",
     "почта",

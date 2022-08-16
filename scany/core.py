@@ -7,7 +7,6 @@ from typing import List
 import time
 import logging
 
-
 logging.basicConfig(encoding='utf-8', level=logging.INFO)
 
 class WebDataCapture():
