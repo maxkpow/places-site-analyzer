@@ -19,7 +19,7 @@ def save_result(result: dict, sitename: str):
         
 if __name__ == "__main__":
     
-    url = "https://benu.rs/apoteke"
+    url = "https://www.bashneft-azs.ru/network_azs/"
     sitename = urlparse(url).netloc
 
     wdc = WebDataCapture()

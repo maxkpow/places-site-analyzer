@@ -1,12 +1,15 @@
 from abc import ABC, abstractmethod
 from enum import Enum
+from typing import List
+import re
 import gzip
 import brotli
+import logging
 from urllib.parse import urlparse
 from scany.constants import CONTENT_TYPES, SEARCH_WORDS
 from scany.models import HTTPResponse
-from typing import List
-import re
+from scany.analyzers import ScriptAnalyzer
+
 
 class ContentEncoding(Enum):
     GZIP = "gzip"
@@ -16,10 +19,9 @@ class ContentEncoding(Enum):
 class Parser(ABC):
     
     @abstractmethod
-    def parse(content):
+    def parse(content: str):
         pass
 
-    @classmethod
     def search_words(self, content: str = "") -> bool:
         try:
             
@@ -32,7 +34,6 @@ class Parser(ABC):
         except:
             return False
     
-    @classmethod
     def is_same_host(self, src: str, website: str) -> bool:
         script_source = urlparse(src)
         website_source = urlparse(website)
@@ -48,19 +49,26 @@ class Parser(ABC):
 
 class HTTPParser(Parser):
 
+    def is_target_contenttype(self, contenttype: str):
+        return any(map(lambda x: x in contenttype, CONTENT_TYPES))
+
     def content_decoder(self, content: str, content_encoding: ContentEncoding):
-        if content_encoding == ContentEncoding.GZIP.value:
-            return gzip.decompress(content).decode("utf-8")
-        elif content_encoding == ContentEncoding.BR.value:
-            return brotli.decompress(content).decode("utf-8")
-        else:
+        try:
+            if content_encoding == ContentEncoding.GZIP.value:
+                return gzip.decompress(content).decode("utf-8")
+            elif content_encoding == ContentEncoding.BR.value:
+                return brotli.decompress(content).decode("utf-8")
+            else:
+                return content
+        except UnicodeDecodeError:
+            logging.warning(msg="Error while decoding content!")
             return content
 
     def parse(self, requests: List):
         for request in requests:
             if request.response:
                 response_content_type = request.response.headers.get("content-type", "")
-                is_target_content_type = any(map(lambda x: x in response_content_type, CONTENT_TYPES))
+                is_target_content_type = self.is_target_contenttype(response_content_type)
 
                 if is_target_content_type:
                     headers = dict((key, value) for key, value in request.response.headers.items())
@@ -87,27 +95,16 @@ class HTTPParser(Parser):
 
 class ScriptsParser(Parser):
 
-    def parse(self, scripts: List, website: str =None) -> List[dict]:
+    def parse(self, scripts: List, website: str = None) -> List[dict]:
         if scripts:
-            # import pdb;pdb.set_trace()
-            for script in scripts:
+            for script_index, script in enumerate(scripts):
                 src = script.get_attribute("src")
-                content = script.get_attribute("innerHTML")
+                body = script.get_attribute("innerHTML")
+                content_length = len(body)
 
-                are_search_words_in_body = self.search_words(content)
-
-                if website:
-                    is_same_host: bool = self.is_same_host(src, website)
-                else:
-                    is_same_host: bool = False
-
-                yield {
-                    "location_words": are_search_words_in_body,
-                    "src": src,
-                    "is_same_host": is_same_host,
-                    "content_length": len(content),
-                    "text": content if content else False,
-                }
+                if content_length > 100:
+                    scripts_analyzer = ScriptAnalyzer(script_index, src, website, body)
+                    yield scripts_analyzer.analyze()
 
 
 class ListsParser(Parser):
@@ -124,8 +121,8 @@ class ListsParser(Parser):
                     yield {
                         "location_words": are_search_words_in_body,
                         "tag": html_list.tag_name,
-                        "text": content,
                         "content_length": content_length,
+                        "body": content,
                     }
 
 
@@ -150,7 +147,7 @@ class LinksParser(Parser):
                         "is_same_host": is_same_host,
                         "location_words": are_search_words_in_body,
                         "tag": link.tag_name,
-                        "text": content,
                         "href": href,
                         "content_length": content_length,
+                        "body": content,
                     }
