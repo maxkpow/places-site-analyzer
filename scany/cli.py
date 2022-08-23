@@ -1,7 +1,7 @@
 import click
 from urllib.parse import urlparse
 from scany.core import WebDataCapture
-from scany import export
+from scany import exporters
 
 
 @click.group()
@@ -17,6 +17,6 @@ def run(url):
     wdc = WebDataCapture()
     result = wdc.start(website=url, timeout=3)
 
-    export.to_excel(result, sitename)
+    exporters.to_excel(result, sitename)
 
 cli.add_command(run)

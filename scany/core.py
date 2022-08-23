@@ -4,6 +4,8 @@ from webdriver_manager.chrome import ChromeDriverManager
 from scany.models import HTTPResponse
 from scany.parsers import HTTPParser, ScriptsParser, ListsParser, LinksParser
 from typing import List
+import bs4
+from bs4 import BeautifulSoup
 import time
 import logging
 
@@ -28,8 +30,11 @@ class WebDataCapture():
 
         time.sleep(timeout)
 
+        soup = BeautifulSoup(driver.page_source)
+
         captured_requests: List[HTTPResponse] = self.__parse_requests(driver.requests)
         captured_scripts: List = self.__parse_scripts(driver.find_elements(By.TAG_NAME, "script"))
+        # captured_scripts: List = self.__parse_scripts(soup.find_all("script"))
         captured_olists: List = self.__parse_lists(driver.find_elements(By.TAG_NAME, "ol"))
         captured_ulists: List = self.__parse_lists(driver.find_elements(By.TAG_NAME, "ul"))
         captured_links: List = self.__parse_links(driver.find_elements(By.TAG_NAME, "a"))
@@ -57,10 +62,10 @@ class WebDataCapture():
 
         return parsed_list
     
-    def __parse_scripts(self, scripts):
+    def __parse_scripts(self, scripts: List[bs4.element.Tag]):
         logging.info(msg="capturing <script>...</script> tags ...")
         parser = ScriptsParser()
-        parsed_list = list(parser.parse(scripts, self.website))
+        parsed_list: List[dict] = list(parser.parse(scripts, self.website))
 
         return parsed_list
     

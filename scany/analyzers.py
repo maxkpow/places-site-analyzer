@@ -7,7 +7,7 @@ from scany.constants import SEARCH_WORDS
 
 class Analyzer(ABC):
 
-    def __clean_symbols(self, content: str) -> List[str]:
+    def clean_symbols(self, content: str) -> List[str]:
         '''
         Removes:
         - punctuation symbols;
@@ -27,7 +27,7 @@ class Analyzer(ABC):
         words_list: List[str] = removed_punctuation.split(' ')
         return words_list
     
-    def __match_coords(self, content: str) -> int:
+    def match_coords(self, content: str) -> int:
         '''
         Functions searches for float spatial coordinates.
         Success seach for: 45.34234, 123.12414, -34.342, -1.231
@@ -37,7 +37,7 @@ class Analyzer(ABC):
 
         return int(points_amount)
     
-    def __calc_words(self, word_cloud: List[str]) -> Dict[str, int]:
+    def calc_words(self, word_cloud: List[str]) -> Dict[str, int]:
         word_dict = {}
 
         for word in word_cloud:
@@ -49,7 +49,7 @@ class Analyzer(ABC):
         return word_dict
     
 
-    def __match_words(self, content: List[str]) -> bool | dict:
+    def match_words(self, content: List[str]) -> bool | dict:
         try:
             
             found_words = [word for word in SEARCH_WORDS if word in content.lower()]
@@ -63,18 +63,24 @@ class Analyzer(ABC):
             return False
     
 
-    def __is_same_host(self, src: str, website: str) -> bool:
+    def is_same_host(self, src: str, website: str) -> bool:
         script_source = urlparse(src)
         website_source = urlparse(website)
 
         try:
             if website_source.netloc in script_source.netloc:
                 return True
+            elif script_source.netloc == "":
+                return True
             else:
                 return False
         except:
             return False
     
+    @abstractmethod
+    def generate_code(self):
+        pass
+
     @abstractmethod
     def analyze(self):
         pass
@@ -89,26 +95,53 @@ class ScriptAnalyzer(Analyzer):
         website: str, 
         body: str
     ):
-        self.script_index = script_index
-        self.src = src
-        self.website = website
-        self.body = body
+        self.script_index: int = script_index
+        self.src: str = src
+        self.website: str = website
+        self.body: str = body
 
 
-    def words_coords_distance(self, word_stats: Dict[str, int], coords_amount: int):
-        pass
+    def words_coords_distance(self, word_stats: Dict[str, int], coords_amount: int) -> str:
+        if coords_amount != 0:
+            close_words: List[str] = []
+
+            for word, amount in word_stats.items():
+                if amount > coords_amount - 10 and amount < coords_amount + 10:
+                    close_words.append(word)
+            
+            return "|".join(close_words)
+        else:
+            return ""
+
+    def generate_code(self):
+        return f'''
+        import requests
+        from bs4 import BeautifulSoup
+
+        response = requests.get(url)
+        soup = BeautifulSoup(response.text)
+
+        script_with_content = soup.find_all("script")[{self.script_index}]
+
+        print(script_with_content.text)
+        '''
     
     def analyze(self):
-        is_same_host: bool = self.__is_same_host(self.src, self.website)
-        coords_amount: int = self.__match_coords(self.body)
-        cleaned_body: List[str] = self.__clean_symbols(self.body)
-        found_search_words: bool | dict = self.__match_words(cleaned_body)
-        words_stats: dict = self.__calc_words(self.body)
+        is_same_host: bool = self.is_same_host(self.src, self.website)
+        coords_amount: int = self.match_coords(self.body)
+        
+        cleaned_body: List[str] = self.clean_symbols(self.body)
+        found_search_words: bool | dict = self.match_words(cleaned_body)
+        
+        # words_stats: dict = self.calc_words(cleaned_body)
+        # words_coords_close = self.words_coords_distance(words_stats, coords_amount)
 
-        yield {
+        return {
+            "script_index": self.script_index,
             "src": self.src,
             "is_same_host": is_same_host,
             "coords_amount": coords_amount,
             "found_search_words": found_search_words,
-            "words_stats": words_stats,
+            "raw_body": self.body,
+            "code": self.generate_code()
         }
