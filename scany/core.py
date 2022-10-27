@@ -30,7 +30,7 @@ class WebDataCapture():
 
         time.sleep(timeout)
 
-        soup = BeautifulSoup(driver.page_source)
+        # soup = BeautifulSoup(driver.page_source)
 
         captured_requests: List[HTTPResponse] = self.__parse_requests(driver.requests)
         captured_scripts: List = self.__parse_scripts(driver.find_elements(By.TAG_NAME, "script"))

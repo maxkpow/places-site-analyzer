@@ -62,7 +62,6 @@ class Analyzer(ABC):
         except:
             return False
     
-
     def is_same_host(self, src: str, website: str) -> bool:
         script_source = urlparse(src)
         website_source = urlparse(website)
@@ -77,13 +76,58 @@ class Analyzer(ABC):
         except:
             return False
     
-    @abstractmethod
     def generate_code(self):
         pass
 
     @abstractmethod
     def analyze(self):
         pass
+
+class HTTPAnalyzer(Analyzer):
+    def __init__(
+        self,
+        host: str, 
+        request_url: str,
+        method: int,
+        status: int,
+        headers: Dict,
+        content_encoding: str,
+        content_type: str,
+        content_length: str,
+        body: str,
+    ):
+        self.host: str = host
+        self.request_url: str = request_url
+        self.method: str = method
+        self.status: int = status
+        self.headers: Dict = headers
+        self.content_encoding: str = content_encoding
+        self.content_type: str = content_type
+        self.content_length: int = content_length
+        self.body: str = body
+    
+    def analyze(self):
+        is_same_host: bool = self.is_same_host(self.request_url, self.host)
+        coords_amount: int = self.match_coords(self.body)
+        
+        cleaned_body: List[str] = self.clean_symbols(self.body)
+        found_search_words: bool | dict = self.match_words(cleaned_body)
+        
+        return {
+            "host": self.host,
+            "request_url": self.request_url,
+            "method": self.method,
+            "status": self.status,
+            "headers": self.headers,
+            "content_encoding": self.content_encoding,
+            "content_type": self.content_type,
+            "content_length": self.content_length,
+            "is_same_host": is_same_host,
+            "coords_amount": coords_amount,
+            "found_search_words": found_search_words,
+            "raw_body": self.body,
+            # "code": self.generate_code()
+        }
 
 
 class ScriptAnalyzer(Analyzer):

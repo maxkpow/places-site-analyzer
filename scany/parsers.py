@@ -8,7 +8,7 @@ import logging
 from urllib.parse import urlparse
 from scany.constants import CONTENT_TYPES, SEARCH_WORDS
 from scany.models import HTTPResponse
-from scany.analyzers import ScriptAnalyzer
+from scany.analyzers import ScriptAnalyzer, HTTPAnalyzer
 
 
 class ContentEncoding(Enum):
@@ -67,31 +67,47 @@ class HTTPParser(Parser):
     def parse(self, requests: List):
         for request in requests:
             if request.response:
+                content_length = len(request.response.body)
                 response_content_type = request.response.headers.get("content-type", "")
                 is_target_content_type = self.is_target_contenttype(response_content_type)
 
-                if is_target_content_type:
+                if is_target_content_type and content_length > 100:
                     headers = dict((key, value) for key, value in request.response.headers.items())
                     response_content_encoding = request.response.headers['content-encoding']
                     
                     response_body = self.content_decoder(request.response.body, response_content_encoding)
-                    are_search_words_in_body = self.search_words(response_body)
+                    
+                    if type(response_body) == "str":
+                        http_analyzer = HTTPAnalyzer(
+                            host=request.host, 
+                            request_url=request.url,
+                            method=request.method,
+                            status=request.response.status_code,
+                            headers=headers,
+                            content_encoding=response_content_encoding,
+                            content_type=response_content_type,
+                            content_length=request.response.headers["content-length"],
+                            body=response_body,
+                        )
 
-                    captured_request: HTTPResponse = {
-                        "location_words": are_search_words_in_body,
-                        "host": request.host,
-                        "url": request.url, 
-                        "path": request.path,
-                        "method": request.method,
-                        "status": request.response.status_code,
-                        "headers": headers,
-                        "content_encoding": response_content_encoding,
-                        "content_type": response_content_type,
-                        "content_length": request.response.headers["content-length"],
-                        "body": response_body,
-                    }
+                        yield http_analyzer.analyze()
+                    
+                    else:
+                        yield {
+                            "host": request.host,
+                            "request_url": request.url,
+                            "method": request.method,
+                            "status": request.response.status_code,
+                            "headers": headers,
+                            "content_encoding": response_content_encoding,
+                            "content_type": response_content_type,
+                            "content_length": request.response.headers["content-length"],
+                            "is_same_host": "",
+                            "coords_amount": "",
+                            "found_search_words": "",
+                            "raw_body": response_body,
+                        }
 
-                    yield captured_request
 
 class ScriptsParser(Parser):
 
